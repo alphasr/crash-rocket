@@ -1,30 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
-
+import { useAccount, AccountType } from '../context/AccountContext';
+import { PlusCircle } from 'lucide-react';
+import AccountModal from '../modal/AccountModal';
 const UserInfo: React.FC = () => {
   const { state } = useGame();
-  
+  const { account } = useAccount();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openAccountModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeAccountModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
-    <div className="flex items-center justify-between bg-gray-900 border border-gray-800 rounded-lg p-3 shadow-lg">
-      <div>
-        <div className="text-sm text-gray-400">Balance</div>
-        <div className="text-xl font-bold text-white">${state.balance.toFixed(2)}</div>
+    <>
+      {/* Balance Display */}
+      <div className='bg-blue-600 rounded-md px-2 py-1 text-sm'>
+        <div className='text-xs text-blue-200'>Balance</div>
+        <div className='font-bold text-white'>
+          $
+          {account.type === AccountType.DEMO
+            ? account.demoBalance.toFixed(2)
+            : account.realBalance.toFixed(2)}
+          {/* Add funds button (only for real account) */}
+          {account.type === AccountType.REAL && (
+            <button
+              onClick={openAccountModal}
+              className='ml-1 p-0.5 rounded-full text-blue-200 hover:text-white transition-colors'
+            >
+              <PlusCircle size={14} />
+            </button>
+          )}
+        </div>
       </div>
-      
-      {state.phase === 'running' && state.hasBet && !state.isCashedOut && (
-        <div>
-          <div className="text-sm text-green-400">Current Bet</div>
-          <div className="text-xl font-bold text-green-400">${state.currentBet.toFixed(2)}</div>
-        </div>
-      )}
-      
-      {state.isCashedOut && state.winAmount > 0 && (
-        <div>
-          <div className="text-sm text-green-400">Won</div>
-          <div className="text-xl font-bold text-green-400">+${state.winAmount.toFixed(2)}</div>
-        </div>
-      )}
-    </div>
+
+      {/* Account Modal */}
+      <AccountModal isOpen={isModalOpen} onClose={closeAccountModal} />
+    </>
   );
 };
 

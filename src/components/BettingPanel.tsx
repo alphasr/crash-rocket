@@ -1,19 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame, GamePhase } from '../context/GameContext';
+import { useAccount, AccountType } from '../context/AccountContext';
 
 const BettingPanel: React.FC = () => {
-  const { state, placeBet } = useGame();
+  const { state, placeBet, getBalance } = useGame();
+  const { account } = useAccount();
   const [betAmount, setBetAmount] = useState(state.currentBet.toString());
-  const [autoCashout, setAutoCashout] = useState<string>('');
-  const [isAutoCashoutEnabled, setIsAutoCashoutEnabled] = useState(false);
+  const [autoCashout, setAutoCashout] = useState<string>('1.5');
+  const [isAutoCashoutEnabled, setIsAutoCashoutEnabled] = useState(true);
+
+  // Update bet amount when account changes (to handle max bet constraints)
+  useEffect(() => {
+    const currentBet = parseFloat(betAmount);
+    if (currentBet > getBalance()) {
+      setBetAmount(getBalance().toString());
+    }
+  }, [account.type, account.demoBalance, account.realBalance]);
 
   const handlePlaceBet = () => {
     const amount = parseFloat(betAmount);
-    if (isNaN(amount) || amount <= 0 || amount > state.balance) return;
-    
-    const autoCashoutValue = isAutoCashoutEnabled && autoCashout ? 
-      parseFloat(autoCashout) : null;
-      
+    if (isNaN(amount) || amount <= 0 || amount > getBalance()) return;
+
+    const autoCashoutValue =
+      isAutoCashoutEnabled && autoCashout ? parseFloat(autoCashout) : null;
+
     placeBet(amount, autoCashoutValue);
   };
 
@@ -29,133 +39,178 @@ const BettingPanel: React.FC = () => {
     }
   };
 
-  const handleMaxBet = () => {
-    setBetAmount(state.balance.toString());
-  };
-
   const handleHalfBet = () => {
     const current = parseFloat(betAmount) || 0;
-    setBetAmount((current / 2).toString());
+    setBetAmount(Math.max(1, Math.floor(current / 2)).toString());
   };
 
   const handleDoubleBet = () => {
     const current = parseFloat(betAmount) || 0;
     const doubled = current * 2;
-    if (doubled <= state.balance) {
+    if (doubled <= getBalance()) {
       setBetAmount(doubled.toString());
     } else {
-      setBetAmount(state.balance.toString());
+      setBetAmount(getBalance().toString());
     }
   };
 
+  const handleMaxBet = () => {
+    setBetAmount(getBalance().toString());
+  };
+
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 shadow-lg w-full max-w-sm">
-      <h2 className="text-xl font-bold text-white mb-4 border-b border-gray-800 pb-2">Place Bet</h2>
-      
-      <div className="space-y-4">
+    <div className='bg-gray-900 border border-gray-800 rounded-lg p-4 shadow-lg'>
+      <h2 className='text-xl font-bold text-white mb-3 pb-2 border-b border-gray-800'>
+        Place Bet
+      </h2>
+
+      <div className='space-y-3'>
         {/* Bet Amount Input */}
         <div>
-          <label className="block text-sm font-medium text-gray-400 mb-1">Bet Amount</label>
-          <div className="relative">
+          <label className='block text-sm font-medium text-gray-400 mb-1'>
+            Bet Amount
+          </label>
+          <div className='flex items-center mb-2'>
             <input
-              type="text"
+              type='text'
               value={betAmount}
               onChange={(e) => setBetAmount(e.target.value)}
               disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-              className="w-full bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className='flex-1 bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500'
             />
-            <div className="absolute inset-y-0 right-0 flex items-center">
-              <button 
-                onClick={decreaseBet}
-                disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-                className="h-full px-2 text-gray-400 hover:text-white disabled:opacity-50"
-              >
-                -
-              </button>
-              <button 
-                onClick={increaseBet}
-                disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-                className="h-full px-2 text-gray-400 hover:text-white disabled:opacity-50"
-              >
-                +
-              </button>
-            </div>
+            <button
+              onClick={decreaseBet}
+              disabled={state.phase !== GamePhase.BETTING || state.hasBet}
+              className='ml-1 px-3 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              -
+            </button>
+            <button
+              onClick={increaseBet}
+              disabled={state.phase !== GamePhase.BETTING || state.hasBet}
+              className='ml-1 px-3 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              +
+            </button>
           </div>
-          
-          <div className="flex gap-2 mt-2">
-            <button 
+
+          <div className='flex gap-1'>
+            <button
               onClick={handleHalfBet}
               disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-              className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded-md hover:bg-gray-700 disabled:opacity-50"
+              className='flex-1 py-1 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50'
             >
               1/2
             </button>
-            <button 
+            <button
               onClick={handleDoubleBet}
               disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-              className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded-md hover:bg-gray-700 disabled:opacity-50"
+              className='flex-1 py-1 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50'
             >
               2x
             </button>
-            <button 
+            <button
               onClick={handleMaxBet}
               disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-              className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded-md hover:bg-gray-700 disabled:opacity-50"
+              className='flex-1 py-1 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50'
             >
               Max
             </button>
           </div>
         </div>
-        
-        {/* Auto Cashout Option */}
-        <div>
-          <div className="flex items-center">
-            <input
-              id="auto-cashout"
-              type="checkbox"
-              checked={isAutoCashoutEnabled}
-              onChange={() => setIsAutoCashoutEnabled(!isAutoCashoutEnabled)}
-              disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-              className="rounded text-blue-500 focus:ring-blue-500 h-4 w-4 bg-gray-800 border-gray-700"
-            />
-            <label htmlFor="auto-cashout" className="ml-2 block text-sm font-medium text-gray-400">
-              Auto Cash Out
-            </label>
-          </div>
-          
-          {isAutoCashoutEnabled && (
-            <div className="mt-2">
-              <input
-                type="text"
-                value={autoCashout}
-                onChange={(e) => setAutoCashout(e.target.value)}
-                placeholder="e.g. 2.00"
-                disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-                className="w-full bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+
+        {/* Auto Cashout Option - Enabled by default for faster gameplay */}
+        <div className='flex items-center'>
+          <input
+            id='auto-cashout'
+            type='checkbox'
+            checked={isAutoCashoutEnabled}
+            onChange={() => setIsAutoCashoutEnabled(!isAutoCashoutEnabled)}
+            disabled={state.phase !== GamePhase.BETTING || state.hasBet}
+            className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-700 rounded bg-gray-800'
+          />
+          <label
+            htmlFor='auto-cashout'
+            className='ml-2 block text-sm text-gray-400'
+          >
+            Auto Cash Out
+          </label>
+
+          <input
+            type='text'
+            value={autoCashout}
+            onChange={(e) => setAutoCashout(e.target.value)}
+            placeholder='1.50'
+            disabled={
+              !isAutoCashoutEnabled ||
+              state.phase !== GamePhase.BETTING ||
+              state.hasBet
+            }
+            className='ml-2 w-16 bg-gray-800 text-white px-2 py-1 text-sm rounded-md border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500'
+          />
+        </div>
+
+        {/* Quick Auto Cashout Presets */}
+        {isAutoCashoutEnabled &&
+          state.phase === GamePhase.BETTING &&
+          !state.hasBet && (
+            <div className='flex flex-wrap gap-1'>
+              <button
+                onClick={() => setAutoCashout('1.2')}
+                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700'
+              >
+                1.2x
+              </button>
+              <button
+                onClick={() => setAutoCashout('1.5')}
+                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700'
+              >
+                1.5x
+              </button>
+              <button
+                onClick={() => setAutoCashout('1.8')}
+                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700'
+              >
+                1.8x
+              </button>
             </div>
           )}
-        </div>
-        
+
         {/* Place Bet Button */}
         <button
           onClick={handlePlaceBet}
-          disabled={state.phase !== GamePhase.BETTING || state.hasBet || parseFloat(betAmount) <= 0 || parseFloat(betAmount) > state.balance}
-          className={`w-full py-2 px-4 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
+          disabled={
+            state.phase !== GamePhase.BETTING ||
+            state.hasBet ||
+            parseFloat(betAmount) <= 0 ||
+            parseFloat(betAmount) > getBalance()
+          }
+          className={`w-full py-3 px-4 rounded-md font-medium focus:outline-none transition-colors ${
             state.phase === GamePhase.BETTING && !state.hasBet
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white animate-pulse'
               : 'bg-gray-700 text-gray-400 cursor-not-allowed'
           }`}
         >
           {state.hasBet ? 'Bet Placed' : 'Place Bet'}
         </button>
-        
-        {/* Round Status */}
+
+        {/* Round Status - Show in milliseconds for fast gameplay */}
         {state.phase === GamePhase.BETTING && !state.hasBet && (
-          <div className="text-sm text-center text-gray-400">
+          <div className='text-sm text-center text-gray-400'>
             Next round in {state.countdown}s
+            {state.countdown < 1 && (
+              <span className='text-yellow-400 animate-pulse'>
+                {' '}
+                (Starting...)
+              </span>
+            )}
           </div>
         )}
+
+        {/* Win Rate Warning */}
+        <div className='text-xs text-gray-500 text-center pt-2'>
+          Only ~30% of games allow winning. Time your cash out carefully!
+        </div>
       </div>
     </div>
   );

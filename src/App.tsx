@@ -1,12 +1,15 @@
 import React from 'react';
+import { AccountProvider } from './context/AccountContext';
 import { GameProvider } from './context/GameContext';
 import GameContainer from './components/GameContainer';
 
 function App() {
   return (
-    <GameProvider>
-      <GameContainer />
-    </GameProvider>
+    <AccountProvider>
+      <GameProvider>
+        <GameContainer />
+      </GameProvider>
+    </AccountProvider>
   );
 }
 
