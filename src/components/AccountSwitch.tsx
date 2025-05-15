@@ -10,10 +10,10 @@ const AccountSwitch: React.FC = () => {
       <div className='flex rounded-md overflow-hidden bg-gray-900'>
         <button
           onClick={() => switchAccount(AccountType.DEMO)}
-          className={`py-2 px-3 text-sm font-medium flex items-center ${
+          className={`py-2 px-3 text-sm font-medium flex items-center transition-colors duration-200 ${
             account.type === AccountType.DEMO
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-800 text-gray-400'
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
           }`}
         >
           <svg
@@ -32,10 +32,10 @@ const AccountSwitch: React.FC = () => {
         </button>
         <button
           onClick={() => switchAccount(AccountType.REAL)}
-          className={`py-2 px-3 text-sm font-medium flex items-center ${
+          className={`py-2 px-3 text-sm font-medium flex items-center transition-colors duration-200 ${
             account.type === AccountType.REAL
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-800 text-gray-400'
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
           }`}
         >
           <svg
@@ -54,10 +54,14 @@ const AccountSwitch: React.FC = () => {
         </button>
       </div>
 
-      {/* Demo Mode Indicator */}
-      {account.type === AccountType.DEMO && (
+      {/* Mode Indicator */}
+      {account.type === AccountType.DEMO ? (
         <div className='ml-2 py-1 px-2 bg-blue-900/90 text-blue-200 rounded-md text-xs'>
           Demo Mode
+        </div>
+      ) : (
+        <div className='ml-2 py-1 px-2 bg-green-900/90 text-green-200 rounded-md text-xs'>
+          Real Mode
         </div>
       )}
     </div>

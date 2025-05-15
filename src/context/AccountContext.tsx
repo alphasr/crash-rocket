@@ -19,6 +19,8 @@ interface AccountContextType {
   switchAccount: (type: AccountType) => void;
   getBalance: () => number;
   updateBalance: (newBalance: number) => void;
+  isFirstVisit: boolean;
+  setIsFirstVisit: (isFirst: boolean) => void;
 }
 
 // Create context
@@ -34,6 +36,7 @@ const initialAccountState: AccountState = {
 // Account provider component
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<AccountState>(initialAccountState);
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
 
   const switchAccount = (type: AccountType) => {
     setAccount((prev) => ({
@@ -59,7 +62,14 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   return (
     <AccountContext.Provider
-      value={{ account, switchAccount, getBalance, updateBalance }}
+      value={{
+        account,
+        switchAccount,
+        getBalance,
+        updateBalance,
+        isFirstVisit,
+        setIsFirstVisit,
+      }}
     >
       {children}
     </AccountContext.Provider>

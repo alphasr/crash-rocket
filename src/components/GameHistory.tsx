@@ -15,25 +15,28 @@ const GameHistory: React.FC = () => {
   };
 
   return (
-    <div className='bg-gray-900 border border-gray-800 rounded-lg p-4 shadow-lg'>
-      <h2 className='text-xl font-bold text-white mb-3 pb-2 border-b border-gray-800'>
+    <div className='bg-gray-900 border border-gray-800 rounded-lg p-4 shadow-lg md:hidden'>
+      <h2 className='text-xl font-bold text-white mb-4 pb-3 border-b border-gray-700'>
         Game History
       </h2>
 
       {state.roundHistory.length === 0 ? (
-        <div className='text-gray-500 text-center py-4'>
+        <div className='text-gray-500 text-center py-6'>
           No games played yet
         </div>
       ) : (
-        <div className='space-y-1'>
+        <div className='space-y-2'>
           {state.roundHistory.map((round, index) => (
             <div
               key={index}
-              className='flex justify-between items-center text-sm py-1'
+              className='flex justify-between items-center text-sm py-2 px-3 bg-gray-800 rounded-md hover:bg-gray-700 transition-colors'
             >
-              <div className='text-gray-500'>#{index + 1}</div>
+              <div className='text-gray-400 font-mono'>
+                #{state.roundHistory.length - index}
+              </div>{' '}
+              {/* Display latest round first */}
               <div
-                className={`font-medium ${getMultiplierColor(
+                className={`font-semibold text-lg ${getMultiplierColor(
                   round.multiplier,
                   round.won
                 )}`}
@@ -42,11 +45,11 @@ const GameHistory: React.FC = () => {
               </div>
               <div>
                 {round.won ? (
-                  <span className='px-2 py-0.5 rounded-full text-xs bg-green-900 text-green-400'>
+                  <span className='px-3 py-1 rounded-full text-xs font-semibold bg-green-900 text-green-400'>
                     Won
                   </span>
                 ) : (
-                  <span className='px-2 py-0.5 rounded-full text-xs bg-red-900 text-red-400'>
+                  <span className='px-3 py-1 rounded-full text-xs font-semibold bg-red-900 text-red-400'>
                     Crashed
                   </span>
                 )}

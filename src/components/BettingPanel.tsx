@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useGame, GamePhase } from '../context/GameContext';
-import { useAccount, AccountType } from '../context/AccountContext';
+import { useAccount } from '../context/AccountContext';
+import CashoutButton from './CashoutButton';
 
 const BettingPanel: React.FC = () => {
   const { state, placeBet, getBalance } = useGame();
@@ -70,31 +71,36 @@ const BettingPanel: React.FC = () => {
           <label className='block text-sm font-medium text-gray-400 mb-1'>
             Bet Amount
           </label>
-          <div className='flex items-center mb-2'>
+          <div className='flex items-center gap-2 mb-2'>
             <input
-              type='text'
+              type='number'
               value={betAmount}
               onChange={(e) => setBetAmount(e.target.value)}
               disabled={state.phase !== GamePhase.BETTING || state.hasBet}
               className='flex-1 bg-gray-800 text-white px-3 py-2 rounded-md border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500'
+              min='1'
             />
             <button
               onClick={decreaseBet}
-              disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-              className='ml-1 px-3 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+              disabled={
+                state.phase !== GamePhase.BETTING ||
+                state.hasBet ||
+                parseFloat(betAmount) <= 1
+              }
+              className='px-3 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
             >
               -
             </button>
             <button
               onClick={increaseBet}
               disabled={state.phase !== GamePhase.BETTING || state.hasBet}
-              className='ml-1 px-3 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+              className='px-3 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
             >
               +
             </button>
           </div>
 
-          <div className='flex gap-1'>
+          <div className='flex gap-2'>
             <button
               onClick={handleHalfBet}
               disabled={state.phase !== GamePhase.BETTING || state.hasBet}
@@ -120,7 +126,7 @@ const BettingPanel: React.FC = () => {
         </div>
 
         {/* Auto Cashout Option - Enabled by default for faster gameplay */}
-        <div className='flex items-center'>
+        <div className='flex items-center gap-2'>
           <input
             id='auto-cashout'
             type='checkbox'
@@ -129,15 +135,12 @@ const BettingPanel: React.FC = () => {
             disabled={state.phase !== GamePhase.BETTING || state.hasBet}
             className='h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-700 rounded bg-gray-800'
           />
-          <label
-            htmlFor='auto-cashout'
-            className='ml-2 block text-sm text-gray-400'
-          >
+          <label htmlFor='auto-cashout' className='block text-sm text-gray-400'>
             Auto Cash Out
           </label>
 
           <input
-            type='text'
+            type='number'
             value={autoCashout}
             onChange={(e) => setAutoCashout(e.target.value)}
             placeholder='1.50'
@@ -146,7 +149,9 @@ const BettingPanel: React.FC = () => {
               state.phase !== GamePhase.BETTING ||
               state.hasBet
             }
-            className='ml-2 w-16 bg-gray-800 text-white px-2 py-1 text-sm rounded-md border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500'
+            className='w-20 bg-gray-800 text-white px-2 py-1 text-sm rounded-md border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500'
+            step='0.01'
+            min='1.01'
           />
         </div>
 
@@ -154,51 +159,64 @@ const BettingPanel: React.FC = () => {
         {isAutoCashoutEnabled &&
           state.phase === GamePhase.BETTING &&
           !state.hasBet && (
-            <div className='flex flex-wrap gap-1'>
+            <div className='flex flex-wrap gap-2'>
               <button
                 onClick={() => setAutoCashout('1.2')}
-                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700'
+                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50'
+                disabled={state.phase !== GamePhase.BETTING || state.hasBet}
               >
                 1.2x
               </button>
               <button
                 onClick={() => setAutoCashout('1.5')}
-                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700'
+                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50'
+                disabled={state.phase !== GamePhase.BETTING || state.hasBet}
               >
                 1.5x
               </button>
               <button
                 onClick={() => setAutoCashout('1.8')}
-                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700'
+                className='py-1 px-2 rounded-md text-xs bg-gray-800 text-gray-300 hover:bg-gray-700 disabled:opacity-50'
+                disabled={state.phase !== GamePhase.BETTING || state.hasBet}
               >
                 1.8x
               </button>
             </div>
           )}
 
-        {/* Place Bet Button */}
-        <button
-          onClick={handlePlaceBet}
-          disabled={
-            state.phase !== GamePhase.BETTING ||
-            state.hasBet ||
-            parseFloat(betAmount) <= 0 ||
-            parseFloat(betAmount) > getBalance()
-          }
-          className={`w-full py-3 px-4 rounded-md font-medium focus:outline-none transition-colors ${
-            state.phase === GamePhase.BETTING && !state.hasBet
-              ? 'bg-blue-600 hover:bg-blue-700 text-white animate-pulse'
-              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          {state.hasBet ? 'Bet Placed' : 'Place Bet'}
-        </button>
+        {/* Bet/Cash Out Button */}
+        {/* Bet/Cash Out Button */}
+        {state.phase === GamePhase.BETTING ? (
+          <button
+            onClick={handlePlaceBet}
+            disabled={
+              state.hasBet ||
+              parseFloat(betAmount) <= 0 ||
+              parseFloat(betAmount) > getBalance()
+            }
+            className={`w-full py-3 px-4 rounded-md font-medium focus:outline-none transition-colors mt-4 ${
+              !state.hasBet
+                ? 'bg-blue-600 hover:bg-blue-700 text-white animate-pulse'
+                : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {state.hasBet ? 'Bet Placed' : 'Place Bet'}
+          </button>
+        ) : state.phase === GamePhase.RUNNING &&
+          state.hasBet &&
+          !state.isCashedOut ? (
+          <CashoutButton />
+        ) : null}
 
         {/* Round Status - Show in milliseconds for fast gameplay */}
-        {state.phase === GamePhase.BETTING && !state.hasBet && (
-          <div className='text-sm text-center text-gray-400'>
-            Next round in {state.countdown}s
-            {state.countdown < 1 && (
+        {/* Round Status */}
+        {/* Round Status */}
+        {state.phase === GamePhase.BETTING && (
+          <div className='text-sm text-center text-gray-400 mt-2'>
+            {state.hasBet
+              ? 'Waiting for next round...'
+              : `Next round in ${state.countdown}s`}
+            {state.countdown < 1 && !state.hasBet && (
               <span className='text-yellow-400 animate-pulse'>
                 {' '}
                 (Starting...)
